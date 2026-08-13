@@ -1,0 +1,2 @@
+﻿import {notFound} from "next/navigation";import Question from "../../../../../../models/Question";import {connectToDatabase} from "../../../../../../lib/mongodb";import QuestionForm from "../../../../../../components/QuestionForm";
+export default async function EditQuestion({params}){const {id}=await params;await connectToDatabase();const q=await Question.findById(id).lean();if(!q)notFound();return <QuestionForm initialData={JSON.parse(JSON.stringify(q))}/>}

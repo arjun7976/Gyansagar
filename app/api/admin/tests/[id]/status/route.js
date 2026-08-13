@@ -1,0 +1,5 @@
+﻿import { NextResponse } from "next/server";
+import Test from "../../../../../../models/Test";
+import { connectToDatabase } from "../../../../../../lib/mongodb";
+import { isObjectId, requireAdmin } from "../../../../../../lib/admin";
+export async function PATCH(request, { params }) { const { id } = await params; try { if (!await requireAdmin()) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 }); if (!isObjectId(id)) return NextResponse.json({ success: false, message: "Invalid test id" }, { status: 400 }); const { status } = await request.json(); if (![["draft", "published", "closed"]].flat().includes(status)) return NextResponse.json({ success: false, message: "Invalid test status" }, { status: 400 }); await connectToDatabase(); const test = await Test.findByIdAndUpdate(id, { status }, { new: true }); if (!test) return NextResponse.json({ success: false, message: "Test not found" }, { status: 404 }); return NextResponse.json({ success: true, data: test }); } catch { return NextResponse.json({ success: false, message: "Unable to update test status" }, { status: 500 }); } }

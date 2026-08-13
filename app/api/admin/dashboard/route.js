@@ -1,0 +1,4 @@
+﻿import { NextResponse } from "next/server";
+import { getCurrentAdmin } from "../../../../lib/auth";
+import { getDashboardStatistics } from "../../../../lib/admin-data";
+export async function GET() { try { const user = await getCurrentAdmin(); if (!user) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 }); return NextResponse.json({ success: true, statistics: await getDashboardStatistics(), recentActivity: [] }); } catch (error) { console.error("Dashboard request failed:", error.message); return NextResponse.json({ success: false, message: "Unable to load dashboard" }, { status: 500 }); } }

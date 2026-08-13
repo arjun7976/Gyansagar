@@ -1,0 +1,6 @@
+﻿import bcrypt from "bcryptjs";
+import { NextResponse } from "next/server";
+import { connectToDatabase } from "../../../../lib/mongodb";
+import User from "../../../../models/User";
+import { createSessionToken, publicUser, sessionCookie } from "../../../../lib/auth";
+export async function POST(request) { try { const { email, password } = await request.json(); const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : ""; if (!normalizedEmail || typeof password !== "string" || password.length === 0) return NextResponse.json({ success: false, message: "Invalid email or password" }, { status: 400 }); await connectToDatabase(); const user = await User.findOne({ email: normalizedEmail }).select("+password name email role isActive"); if (!user || user.role !== "admin" || !user.isActive || !(await bcrypt.compare(password, user.password))) return NextResponse.json({ success: false, message: "Invalid email or password" }, { status: 401 }); const response = NextResponse.json({ success: true, user: publicUser(user) }); response.cookies.set(sessionCookie(await createSessionToken(user))); return response; } catch (error) { console.error("Admin login failed:", error.message); return NextResponse.json({ success: false, message: "Unable to process login right now" }, { status: 500 }); } }

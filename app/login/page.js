@@ -1,0 +1,1 @@
+﻿import AuthForm from"../../components/student/AuthForm";export default function Login(){return <AuthForm/>}

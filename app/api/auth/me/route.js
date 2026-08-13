@@ -1,0 +1,3 @@
+﻿import { NextResponse } from "next/server";
+import { getCurrentAdmin } from "../../../../lib/auth";
+export async function GET() { try { const user = await getCurrentAdmin(); if (!user) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 }); return NextResponse.json({ success: true, user }); } catch (error) { console.error("Session lookup failed:", error.message); return NextResponse.json({ success: false, message: "Unable to verify session" }, { status: 500 }); } }
