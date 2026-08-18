@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { connectToDatabase } from "../../../../../lib/mongodb";
-import Doubt from "../../../../../models/Doubt";
-import User from "../../../../../models/User";
-import { requireAdmin } from "../../../../../lib/admin";
+import { connectToDatabase } from "../../../../lib/mongodb";
+import Doubt from "../../../../models/Doubt";
+import User from "../../../../models/User";
+import { requireAdmin } from "../../../../lib/admin";
 
 export async function GET(req) {
   try {

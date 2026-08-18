@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import Doubt from "../../../../../models/Doubt";
-import { connectToDatabase } from "../../../../../lib/mongodb";
-import { currentStudent } from "../../../../../lib/student-auth";
+import Doubt from "../../../../models/Doubt";
+import { connectToDatabase } from "../../../../lib/mongodb";
+import { currentStudent } from "../../../../lib/student-auth";
 
 export async function GET(request) {
   try {
@@ -9,7 +9,7 @@ export async function GET(request) {
     if (!student) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     await connectToDatabase();
-    const doubts = await Doubt.find({ studentId: student.userId }).sort({ createdAt: -1 }).lean();
+    const doubts = await Doubt.find({ studentId: student.id }).sort({ createdAt: -1 }).lean();
     return NextResponse.json({ success: true, doubts });
   } catch (error) {
     return NextResponse.json({ success: false, message: "Error fetching doubts" }, { status: 500 });
@@ -28,13 +28,14 @@ export async function POST(request) {
 
     await connectToDatabase();
     const doubt = await Doubt.create({
-      studentId: student.userId,
+      studentId: student.id,
       subject,
       question
     });
 
     return NextResponse.json({ success: true, doubt });
   } catch (error) {
-    return NextResponse.json({ success: false, message: "Error creating doubt" }, { status: 500 });
+    console.error("Doubt POST Error:", error);
+    return NextResponse.json({ success: false, message: "Error creating doubt", error: error.message }, { status: 500 });
   }
 }
