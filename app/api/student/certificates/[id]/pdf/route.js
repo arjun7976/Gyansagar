@@ -29,7 +29,10 @@ export async function GET(req, { params }) {
     }
 
     const studentData = await User.findById(student.id).lean();
-    const test = await Test.findById(certificate.testId._id || certificate.testId).lean();
+    let test = null;
+    if (certificate.testId) {
+      test = await Test.findById(certificate.testId._id || certificate.testId).lean();
+    }
 
     const pdfDoc = await generateCertificatePDF(certificate, studentData, test);
     const pdfBuffer = Buffer.from(pdfDoc.output('arraybuffer'));
