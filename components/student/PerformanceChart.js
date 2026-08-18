@@ -8,9 +8,9 @@ export default function PerformanceChart({ data }) {
   }
 
   // Format data for Recharts
-  const chartData = data.slice(-10).map((a, i) => ({
+  const chartData = data.map((a, i) => ({
     name: `T${i + 1}`,
-    fullTitle: a.testId?.title || "Test",
+    fullTitle: a.fullTitle,
     percentage: a.percentage,
     score: a.score
   }));

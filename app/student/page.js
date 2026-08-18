@@ -121,7 +121,7 @@ export default async function StudentDashboard() {
             <h2 className="font-semibold text-gray-800">Performance Trend</h2>
           </div>
           <div className="p-6 h-64">
-             <PerformanceChart data={completedAttempts} />
+             <PerformanceChart data={completedAttempts.slice(-10).map(a => ({ percentage: a.percentage, score: a.score, fullTitle: a.testId?.title || "Test" }))} />
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import Doubt from "../../../../models/Doubt";
-import { connectToDatabase } from "../../../../lib/mongodb";
-import { currentStudent } from "../../../../lib/student-auth";
+import Doubt from "../../../../../models/Doubt";
+import { connectToDatabase } from "../../../../../lib/mongodb";
+import { currentStudent } from "../../../../../lib/student-auth";
 
 export async function GET(request) {
   try {
