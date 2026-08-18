@@ -19,6 +19,7 @@ export default function StudentDetailPage({ params }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
+  const [batch, setBatch] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [password, setPassword] = useState("");
 
@@ -36,6 +37,7 @@ export default function StudentDetailPage({ params }) {
         setName(data.data.name || "");
         setEmail(data.data.email || "");
         setMobile(data.data.mobile || "");
+        setBatch(data.data.batch || "");
         setIsActive(data.data.isActive ?? true);
       } else {
         setError(data.message);
@@ -57,7 +59,7 @@ export default function StudentDetailPage({ params }) {
       const res = await fetch(`/api/admin/students/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, mobile, isActive, password })
+        body: JSON.stringify({ name, email, mobile, batch, isActive, password })
       });
       const data = await res.json();
       
@@ -107,6 +109,15 @@ export default function StudentDetailPage({ params }) {
             <div>
               <label className="block text-sm font-medium mb-1">Mobile</label>
               <input type="text" value={mobile} onChange={e => setMobile(e.target.value)} className="w-full p-2 border rounded" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Batch</label>
+              <select value={batch} onChange={e => setBatch(e.target.value)} className="w-full p-2 border rounded">
+                <option value="">No Batch Assigned</option>
+                <option value="Batch 1">Batch 1</option>
+                <option value="Batch 2">Batch 2</option>
+                <option value="Batch 3">Batch 3</option>
+              </select>
             </div>
             <div className="flex items-center gap-2">
               <input type="checkbox" id="isActive" checked={isActive} onChange={e => setIsActive(e.target.checked)} className="rounded" />

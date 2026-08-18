@@ -17,7 +17,7 @@ export async function GET(req, { params }) {
 
     await connectToDatabase();
 
-    const student = await User.findById(id).select("name email mobile isActive createdAt").lean();
+    const student = await User.findById(id).select("name email mobile batch isActive createdAt").lean();
     if (!student) return NextResponse.json({ success: false, message: "Student not found" }, { status: 404 });
 
     // Fetch test attempts
@@ -78,7 +78,7 @@ export async function PUT(req, { params }) {
     const { id } = await params;
     if (!isObjectId(id)) return NextResponse.json({ success: false, message: "Invalid student ID" }, { status: 400 });
 
-    const { name, email, mobile, password, isActive } = await req.json();
+    const { name, email, mobile, batch, password, isActive } = await req.json();
 
     await connectToDatabase();
     const student = await User.findById(id);
@@ -87,6 +87,7 @@ export async function PUT(req, { params }) {
     student.name = name?.trim() || student.name;
     if (email) student.email = email.trim().toLowerCase();
     if (mobile) student.mobile = mobile.trim();
+    if (batch !== undefined) student.batch = batch.trim();
     if (typeof isActive === "boolean") student.isActive = isActive;
     
     if (password && password.length >= 8) {
