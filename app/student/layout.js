@@ -22,8 +22,11 @@ export default function StudentLayout({ children }) {
               </Link>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/student" className="hover:text-blue-200 transition-colors">
+              <Link href="/student" className={`hover:text-blue-200 transition-colors ${isActive('/student') ? 'text-blue-200 underline underline-offset-4' : ''}`}>
                 Dashboard
+              </Link>
+              <Link href="/student/certificates" className={`hover:text-blue-200 transition-colors ${isActive('/student/certificates') ? 'text-blue-200 underline underline-offset-4' : ''}`}>
+                Certificates
               </Link>
               <Link href="/student/notes" className="hover:text-blue-200 transition-colors">
                 Study Notes

@@ -62,10 +62,19 @@ export default function CertificatesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {certificates.map(cert => (
             <div key={cert._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-br from-yellow-400 to-orange-500 p-6 text-white text-center">
-                <div className="text-4xl mb-2">🏆</div>
-                <h3 className="text-lg font-bold">{cert.testId?.title || "Certificate"}</h3>
-                <p className="text-sm opacity-90">{cert.testId?.subject || ""}</p>
+              <div className={`p-6 text-white text-center ${cert.type === "monthly" ? "bg-gradient-to-br from-indigo-500 to-purple-600" : "bg-gradient-to-br from-yellow-400 to-orange-500"}`}>
+                <div className="text-4xl mb-2">{cert.type === "monthly" ? "🏆" : "📜"}</div>
+                {cert.type === "monthly" ? (
+                  <>
+                    <h3 className="text-lg font-bold">Monthly Champion</h3>
+                    <p className="text-sm opacity-90">{cert.monthYear}</p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-lg font-bold">{cert.testId?.title || "Certificate"}</h3>
+                    <p className="text-sm opacity-90">{cert.testId?.subject || ""}</p>
+                  </>
+                )}
               </div>
               <div className="p-6 space-y-3">
                 <div className="flex justify-between">

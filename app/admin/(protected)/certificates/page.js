@@ -8,6 +8,12 @@ export default function AdminCertificatesPage() {
   
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
+  
+  // Monthly modal state
+  const [showModal, setShowModal] = useState(false);
+  const [month, setMonth] = useState(new Date().getMonth() + 1); // 1-12
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [generating, setGenerating] = useState(false);
 
   const fetchCertificates = async () => {
     setLoading(true);
@@ -28,6 +34,31 @@ export default function AdminCertificatesPage() {
   useEffect(() => {
     fetchCertificates();
   }, [page]);
+  
+  const handleGenerateMonthly = async () => {
+    setGenerating(true);
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthYear = `${monthNames[month - 1]} ${year}`;
+    
+    try {
+      const res = await fetch("/api/admin/certificates/monthly", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ month, year, monthYear })
+      });
+      const data = await res.json();
+      alert(data.message);
+      if (data.success) {
+        setShowModal(false);
+        setPage(1);
+        fetchCertificates();
+      }
+    } catch (e) {
+      alert("Failed to generate certificates.");
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const getRankBadge = (rank) => {
     if (rank === 1) return <span className="bg-yellow-100 text-yellow-800 border border-yellow-300 px-3 py-1 rounded-full text-xs font-bold shadow-sm">🥇 Rank 1</span>;
@@ -38,10 +69,51 @@ export default function AdminCertificatesPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-800">Issued Certificates</h1>
-        <p className="text-gray-500 mt-1">View the top rankers (1st, 2nd, 3rd) who received automated certificates.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Issued Certificates</h1>
+          <p className="text-gray-500 mt-1">View the top rankers (1st, 2nd, 3rd) who received automated certificates.</p>
+        </div>
+        <button 
+          onClick={() => setShowModal(true)}
+          className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-bold shadow-md hover:bg-indigo-700 transition"
+        >
+          🏆 Generate Monthly Champions
+        </button>
       </div>
+      
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-96">
+            <h2 className="text-xl font-bold mb-4">Generate Monthly Certificates</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              This will analyze all tests submitted in the selected month, find the Top 3 highest scoring students, and issue them the prestigious Monthly Champion certificates.
+            </p>
+            
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Month</label>
+                <select value={month} onChange={e => setMonth(e.target.value)} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                  {[...Array(12)].map((_, i) => (
+                    <option key={i+1} value={i+1}>{new Date(2000, i, 1).toLocaleString('default', { month: 'long' })}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Year</label>
+                <input type="number" value={year} onChange={e => setYear(e.target.value)} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium">Cancel</button>
+              <button onClick={handleGenerateMonthly} disabled={generating} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50">
+                {generating ? "Generating..." : "Generate Now"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
@@ -69,8 +141,17 @@ export default function AdminCertificatesPage() {
                       <div className="text-xs text-gray-500">{cert.studentId?.batch || "No Batch"}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="font-medium text-gray-800">{cert.testId?.title || "Unknown Test"}</div>
-                      <div className="text-xs text-blue-600 font-semibold">{cert.testId?.subject || "Subject"}</div>
+                      {cert.type === "monthly" ? (
+                        <div>
+                          <div className="font-bold text-indigo-700 uppercase tracking-wide">🏆 Monthly Champion</div>
+                          <div className="text-xs text-gray-500 font-medium">{cert.monthYear}</div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="font-medium text-gray-800">{cert.testId?.title || "Unknown Test"}</div>
+                          <div className="text-xs text-blue-600 font-semibold">{cert.testId?.subject || "Subject"}</div>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-center">
                       {getRankBadge(cert.rank)}
