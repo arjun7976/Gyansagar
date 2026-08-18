@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "../../../../lib/mongodb";
 import TestAttempt from "../../../../models/TestAttempt";
 import User from "../../../../models/User";
+import Test from "../../../../models/Test";
 import { getCurrentAdmin } from "../../../../lib/auth";
 
 export async function GET(req) {

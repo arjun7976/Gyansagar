@@ -25,6 +25,12 @@ export default function StudentLayout({ children }) {
               <Link href="/student" className="hover:text-blue-200 transition-colors">
                 Dashboard
               </Link>
+              <Link href="/student/notes" className="hover:text-blue-200 transition-colors">
+                Study Notes
+              </Link>
+              <Link href="/student/settings" className="hover:text-blue-200 transition-colors">
+                Settings
+              </Link>
               <button
                 onClick={handleLogout}
                 className="bg-blue-700 hover:bg-blue-600 px-4 py-2 rounded font-medium transition-colors"

@@ -12,7 +12,9 @@ const testSchema = new mongoose.Schema({
   shuffleQuestions: { type: Boolean, default: true },
   shuffleOptions: { type: Boolean, default: false },
   showResultImmediately: { type: Boolean, default: true },
-  allowReattempt: { type: Boolean, default: false },
+  maxAttempts: { type: Number, default: 1, min: 1 },
+  startDate: { type: Date, default: null },
+  endDate: { type: Date, default: null },
   selectionMode: { type: String, enum: ["manual", "random"], default: "manual" },
   randomConfig: {
     totalQuestions: { type: Number, default: 0 },

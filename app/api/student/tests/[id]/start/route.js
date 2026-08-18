@@ -78,13 +78,23 @@ export async function POST(_, { params }) {
   const t = await Test.findOne({ _id: id, status: "published" });
   if (!t) return NextResponse.json({ success: false, message: "Test not available" }, { status: 404 });
 
+  // Check test deadlines
+  const now = new Date();
+  if (t.startDate && now < new Date(t.startDate)) {
+    return NextResponse.json({ success: false, message: `This test will be available from ${new Date(t.startDate).toLocaleString()}` }, { status: 403 });
+  }
+  if (t.endDate && now > new Date(t.endDate)) {
+    return NextResponse.json({ success: false, message: `This test has ended on ${new Date(t.endDate).toLocaleString()}` }, { status: 403 });
+  }
+
   // Resume existing in-progress attempt
   const active = await TestAttempt.findOne({ studentId: s.id, testId: id, status: "in_progress" });
   if (active) return NextResponse.json({ success: true, data: { attemptId: active._id, resumed: true } });
 
-  // Check reattempt
-  if (!t.allowReattempt && await TestAttempt.exists({ studentId: s.id, testId: id, status: { $in: ["submitted", "auto_submitted"] } })) {
-    return NextResponse.json({ success: false, message: "You have already attempted this test." }, { status: 400 });
+  // Check attempt limits
+  const completedAttempts = await TestAttempt.countDocuments({ studentId: s.id, testId: id, status: { $in: ["submitted", "auto_submitted"] } });
+  if (completedAttempts >= (t.maxAttempts || 1)) {
+    return NextResponse.json({ success: false, message: `You have reached the maximum number of attempts (${t.maxAttempts || 1}) for this test.` }, { status: 403 });
   }
 
   // Build the question snapshot for this attempt
