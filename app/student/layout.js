@@ -28,6 +28,9 @@ export default function StudentLayout({ children }) {
               <Link href="/student/notes" className="hover:text-blue-200 transition-colors">
                 Study Notes
               </Link>
+              <Link href="/student/doubts" className="hover:text-blue-200 transition-colors">
+                Doubts
+              </Link>
               <Link href="/student/settings" className="hover:text-blue-200 transition-colors">
                 Settings
               </Link>

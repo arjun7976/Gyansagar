@@ -10,6 +10,7 @@ const links = [
   ["Students", "/admin/students"], 
   ["Results", "/admin/results"],
   ["Study Notes", "/admin/notes"],
+  ["Doubts", "/admin/doubts"],
   ["Notifications", "/admin/notifications"],
   ["Settings", "/admin/settings"]
 ];

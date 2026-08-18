@@ -26,6 +26,11 @@ export default function TestAttemptPage({ params }) {
   
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   
+  // Anti-cheat states
+  const [examStarted, setExamStarted] = useState(false);
+  const [warnings, setWarnings] = useState(0);
+  const [warningModalMessage, setWarningModalMessage] = useState("");
+  
   const timerRef = useRef(null);
 
   // Load Attempt Data
@@ -91,7 +96,7 @@ export default function TestAttemptPage({ params }) {
 
   // Timer Countdown
   useEffect(() => {
-    if (timeLeft === null || timeLeft <= 0 || loading) return;
+    if (timeLeft === null || timeLeft <= 0 || loading || !examStarted) return;
 
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
@@ -105,7 +110,52 @@ export default function TestAttemptPage({ params }) {
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-  }, [timeLeft, loading]);
+  }, [timeLeft, loading, examStarted]);
+
+  // Anti-Cheat Observers
+  useEffect(() => {
+    if (!examStarted) return;
+    
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        handleWarning("Tab switching or minimizing the browser is strictly prohibited!");
+      }
+    };
+    
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        handleWarning("Exiting fullscreen is prohibited!");
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, [examStarted]);
+
+  const handleWarning = (msg) => {
+    setWarnings(prev => {
+      const newWarnings = prev + 1;
+      if (newWarnings >= 3) {
+        alert("Maximum warnings reached. Your test is being auto-submitted.");
+        handleAutoSubmit();
+      } else {
+        setWarningModalMessage(`WARNING ${newWarnings}/3: ${msg}\n\nIf you reach 3 warnings, your test will be auto-submitted.`);
+      }
+      return newWarnings;
+    });
+  };
+
+  const startExam = () => {
+    document.documentElement.requestFullscreen().then(() => {
+      setExamStarted(true);
+    }).catch(err => {
+      alert("Please allow fullscreen mode to start the test.");
+    });
+  };
 
   const handleAutoSubmit = async () => {
     setSubmitting(true);
@@ -211,8 +261,75 @@ export default function TestAttemptPage({ params }) {
   const answeredCount = Object.keys(answers).length;
   const markedCount = markedForReview.size;
 
+  if (!examStarted) {
+    return (
+      <div className="flex flex-col h-screen bg-gray-50 items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg text-center border border-gray-200">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">🚫</span>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Strict Exam Environment</h2>
+          <p className="text-gray-600 mb-6">
+            This test is actively monitored. By starting, you agree to the following rules:
+          </p>
+          <ul className="text-left text-sm text-gray-700 space-y-3 mb-8 bg-gray-50 p-6 rounded-xl border border-gray-200">
+            <li className="flex items-start">
+              <span className="text-red-500 mr-2 font-bold">1.</span>
+              <strong>No Tab Switching:</strong> You cannot switch tabs or minimize the browser.
+            </li>
+            <li className="flex items-start">
+              <span className="text-red-500 mr-2 font-bold">2.</span>
+              <strong>Fullscreen Only:</strong> You cannot exit fullscreen mode.
+            </li>
+            <li className="flex items-start">
+              <span className="text-red-500 mr-2 font-bold">3.</span>
+              <strong>No Copy/Paste:</strong> Right-clicking, copying, and pasting are disabled.
+            </li>
+            <li className="flex items-start">
+              <span className="text-red-500 mr-2 font-bold">4.</span>
+              <strong>3 Warnings:</strong> If you violate these rules 3 times, your test will automatically submit.
+            </li>
+          </ul>
+          <button 
+            onClick={startExam}
+            className="w-full py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold shadow-lg shadow-blue-500/30 transition-all text-lg"
+          >
+            I Agree, Start Fullscreen Exam
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
+    <div 
+      className="flex flex-col h-screen bg-gray-50 overflow-hidden select-none"
+      onCopy={e => e.preventDefault()}
+      onPaste={e => e.preventDefault()}
+      onContextMenu={e => e.preventDefault()}
+    >
+      {/* Warning Modal */}
+      {warningModalMessage && (
+        <div className="fixed inset-0 bg-red-900/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border-4 border-red-500 text-center">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-4xl text-red-600">⚠️</span>
+            </div>
+            <h2 className="text-2xl font-bold text-red-600 mb-4">SECURITY WARNING</h2>
+            <p className="text-gray-800 text-lg mb-8 whitespace-pre-wrap font-medium">{warningModalMessage}</p>
+            <button 
+              onClick={() => {
+                setWarningModalMessage("");
+                document.documentElement.requestFullscreen().catch(() => {});
+              }}
+              className="w-full py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 font-bold shadow-md transition-colors"
+            >
+              I Understand, Return to Test
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-blue-800 text-white shadow-md z-10 shrink-0">
         <div className="px-4 py-3 flex justify-between items-center">

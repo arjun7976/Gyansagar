@@ -39,7 +39,7 @@ export async function GET(req) {
     }
 
     const results = await TestAttempt.find(query)
-      .populate("studentId", "name email")
+      .populate("studentId", "name email batch")
       .populate("testId", "title subject totalMarks passingPercentage")
       .sort({ submittedAt: -1 })
       .lean();
@@ -58,6 +58,7 @@ export async function GET(req) {
     const excelData = results.map((r, idx) => ({
       "Rank": r.rank,
       "Student Name": r.studentId?.name || "Unknown",
+      "Batch": r.studentId?.batch || "Unassigned",
       "Test": r.testId?.title || "Unknown Test",
       "Subject": r.testId?.subject || "",
       "Score": r.score,
@@ -80,6 +81,7 @@ export async function GET(req) {
     ws['!cols'] = [
       { wch: 8 },
       { wch: 25 },
+      { wch: 15 },
       { wch: 30 },
       { wch: 20 },
       { wch: 10 },

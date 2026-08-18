@@ -4,6 +4,7 @@ import TestAttempt from "../../models/TestAttempt";
 import Test from "../../models/Test";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import PerformanceChart from "../../components/student/PerformanceChart";
 
 export default async function StudentDashboard() {
   const student = await currentStudent();
@@ -119,22 +120,8 @@ export default async function StudentDashboard() {
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
             <h2 className="font-semibold text-gray-800">Performance Trend</h2>
           </div>
-          <div className="p-6 h-64 flex items-end justify-between space-x-2">
-             {completedAttempts.length === 0 ? (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">No data</div>
-             ) : (
-                completedAttempts.slice(-10).map((a, i) => (
-                  <div key={i} className="flex flex-col items-center flex-1 group relative">
-                     <div className="absolute -top-8 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 transition-opacity">
-                        {a.percentage}% - {a.testId?.title}
-                     </div>
-                     <div className="w-full bg-blue-100 rounded-t-sm" style={{ height: '100px', display: 'flex', alignItems: 'flex-end' }}>
-                        <div className="w-full bg-blue-500 rounded-t-sm hover:bg-blue-600 transition-colors" style={{ height: `${a.percentage}%` }}></div>
-                     </div>
-                     <span className="text-[10px] text-gray-400 mt-2 truncate w-full text-center">T{i+1}</span>
-                  </div>
-                ))
-             )}
+          <div className="p-6 h-64">
+             <PerformanceChart data={completedAttempts} />
           </div>
         </div>
       </div>
