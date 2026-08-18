@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import Note from "../../../../models/Note";
 import { connectToDatabase } from "../../../../lib/mongodb";
-import { requireStudent } from "../../../../lib/auth";
+import { currentStudent } from "../../../../lib/student-auth";
 
 export async function GET(request) {
   try {
-    const studentInfo = await requireStudent();
+    const studentInfo = await currentStudent();
     if (!studentInfo) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     
     await connectToDatabase();
