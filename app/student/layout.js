@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function StudentLayout({ children }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isActive = (path) => pathname === path;
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
