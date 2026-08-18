@@ -56,7 +56,7 @@ export default async function StudentDashboard() {
   }));
 
   // Fetch available published tests
-  const availableTests = await Test.find({ status: "published" })
+  const availableTests = await Test.find({ status: "published", isDeleted: { $ne: true } })
     .sort({ createdAt: -1 })
     .lean();
 
