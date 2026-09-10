@@ -75,7 +75,16 @@ export async function POST(_, { params }) {
   if (!s) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
   await connectToDatabase();
 
-  const t = await Test.findOne({ _id: id, status: "published" });
+  const query = {
+    _id: id,
+    status: "published",
+    isDeleted: { $ne: true },
+    $or: [
+      { visibility: { $ne: "specific" } },
+      { visibility: "specific", assignedStudents: s.id }
+    ]
+  };
+  const t = await Test.findOne(query);
   if (!t) return NextResponse.json({ success: false, message: "Test not available" }, { status: 404 });
 
   // Check test deadlines

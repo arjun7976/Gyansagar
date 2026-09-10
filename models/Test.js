@@ -44,6 +44,8 @@ const testSchema = new mongoose.Schema({
     certificate: { type: Boolean, default: false }
   },
   status: { type: String, enum: ["draft", "published", "closed"], default: "draft", index: true },
+  visibility: { type: String, enum: ["all", "specific"], default: "all" },
+  assignedStudents: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   isDeleted: { type: Boolean, default: false, index: true },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
 }, { timestamps: true });

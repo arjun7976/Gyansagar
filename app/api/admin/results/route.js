@@ -21,9 +21,7 @@ export async function GET(req) {
 
     await connectToDatabase();
 
-    const query = {
-      status: { $in: ["submitted", "auto_submitted"] }
-    };
+    const query = {};
 
     if (testId) {
       query.testId = testId;
