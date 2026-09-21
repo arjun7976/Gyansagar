@@ -91,11 +91,15 @@ export default function QuestionAnalysis({ questions, attempt }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-6">
                   <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
                     <span className="block text-gray-500 font-semibold mb-1 uppercase text-xs tracking-wider">Your Answer</span>
-                    <span className="font-medium text-gray-900">{userAnswer ? `${userAnswer}: ${q.options[userAnswer]}` : "Not Attempted"}</span>
+                    <span className="font-medium text-gray-900">
+                      {userAnswer ? `${userAnswer}${q.options?.[userAnswer] ? `: ${q.options[userAnswer]}` : ""}` : "Not Attempted"}
+                    </span>
                   </div>
                   <div className="p-4 rounded-lg bg-green-50 border border-green-200">
                     <span className="block text-green-700 font-semibold mb-1 uppercase text-xs tracking-wider">Correct Answer</span>
-                    <span className="font-medium text-green-900">{q.correctAnswer}: {q.options[q.correctAnswer]}</span>
+                    <span className="font-medium text-green-900">
+                      {q.correctAnswer ? `${q.correctAnswer}${q.options?.[q.correctAnswer] ? `: ${q.options[q.correctAnswer]}` : ""}` : "N/A"}
+                    </span>
                   </div>
                 </div>
                 

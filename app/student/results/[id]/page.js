@@ -91,9 +91,26 @@ export default async function ResultPage({ params }) {
     console.error("Failed to fetch rank for result page", e);
   }
 
-  // Fetch Questions for Analysis
-  const questions = await Question.find({ testId: attempt.testId._id }).lean();
+  // Preserve the frozen question sequence for manual/OMR attempts. Legacy
+  // attempts without a snapshot retain the existing testId fallback.
+  let questions;
+  if (attempt.selectedQuestions?.length) {
+    const ids = attempt.selectedQuestions.map((row) => row.questionId);
+    const sqMap = Object.fromEntries(attempt.selectedQuestions.map(sq => [sq.questionId.toString(), sq]));
+    questions = await Question.find({ _id: { $in: ids } }).lean();
+    const order = Object.fromEntries(ids.map((id, index) => [id.toString(), index]));
+    questions.sort((a, b) => order[a._id.toString()] - order[b._id.toString()]);
+    questions = questions.map(q => ({
+      ...q,
+      correctAnswer: sqMap[q._id.toString()]?.correctAnswer || q.correctAnswer
+    }));
+  } else {
+    questions = await Question.find({ testId: attempt.testId._id }).lean();
+  }
   
+  const safeQuestions = JSON.parse(JSON.stringify(questions));
+  const safeAttempt = JSON.parse(JSON.stringify(attempt));
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Result Card */}
@@ -157,7 +174,7 @@ export default async function ResultPage({ params }) {
       </div>
 
       {/* Question-wise Analysis */}
-      <QuestionAnalysis questions={questions} attempt={attempt} />
+      <QuestionAnalysis questions={safeQuestions} attempt={safeAttempt} />
     </div>
   );
 }

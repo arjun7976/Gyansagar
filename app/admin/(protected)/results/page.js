@@ -15,6 +15,9 @@ export default function AdminResultsPage() {
   const [passFail, setPassFail] = useState("");
   const [sort, setSort] = useState("latest");
 
+  const [testsList, setTestsList] = useState([]);
+  const [selectedTestId, setSelectedTestId] = useState("");
+
   const fetchResults = useCallback(async () => {
     setLoading(true);
     try {
@@ -23,7 +26,8 @@ export default function AdminResultsPage() {
         limit: "10",
         search,
         passFail,
-        sort
+        sort,
+        ...(selectedTestId ? { testId: selectedTestId } : {})
       });
       const res = await fetch(`/api/admin/results?${q.toString()}`);
       const data = await res.json();
@@ -37,11 +41,24 @@ export default function AdminResultsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, passFail, sort]);
+  }, [page, search, passFail, sort, selectedTestId]);
 
   useEffect(() => {
     fetchResults();
   }, [fetchResults]);
+
+  useEffect(() => {
+    async function loadTests() {
+      try {
+        const res = await fetch("/api/admin/omr/tests");
+        const data = await res.json();
+        if (data.success) setTestsList(data.tests || []);
+      } catch (err) {
+        console.error("Failed to load test list for filter:", err);
+      }
+    }
+    loadTests();
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -58,7 +75,7 @@ export default function AdminResultsPage() {
 
   const handleExport = async (type) => {
     const params = new URLSearchParams({
-      testId: "",
+      testId: selectedTestId || "",
       studentId: "",
       status: "",
       passFail,
@@ -75,7 +92,7 @@ export default function AdminResultsPage() {
         const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = downloadUrl;
-        a.download = `results EXPORT.${type === "csv" ? "csv" : "xlsx"}`;
+        a.download = `results_export_${selectedTestId || "all"}.${type === "csv" ? "csv" : "xlsx"}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(downloadUrl);
@@ -84,6 +101,26 @@ export default function AdminResultsPage() {
     } catch (e) {
       console.error("Export failed:", e);
       alert("Failed to export results");
+    }
+  };
+
+  const handleDeleteResult = async (attemptId, studentName, testTitle) => {
+    const confirmMessage = `Are you sure you want to delete the test result for "${studentName || 'Student'}" on "${testTitle || 'Test'}"?\nThis action cannot be undone.`;
+    if (!window.confirm(confirmMessage)) return;
+
+    try {
+      const res = await fetch(`/api/admin/results/${attemptId}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        fetchResults();
+      } else {
+        alert(data.message || "Failed to delete result.");
+      }
+    } catch (err) {
+      console.error("Delete result error:", err);
+      alert("Server error deleting result.");
     }
   };
 
@@ -97,13 +134,13 @@ export default function AdminResultsPage() {
         <div className="flex gap-3">
           <button
             onClick={() => handleExport("excel")}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition"
+            className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-emerald-700 transition flex items-center gap-1.5 shadow"
           >
-            Export Excel
+            📊 Export Excel (.xlsx)
           </button>
           <button
             onClick={() => handleExport("csv")}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition shadow"
           >
             Export CSV
           </button>
@@ -118,13 +155,25 @@ export default function AdminResultsPage() {
               placeholder="Search student name..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
           </div>
           <select 
+            value={selectedTestId}
+            onChange={(e) => { setSelectedTestId(e.target.value); setPage(1); }}
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+          >
+            <option value="">All Tests (सभी टेस्ट)</option>
+            {testsList.map((t) => (
+              <option key={t._id} value={t._id}>
+                {t.title} ({t.subject || "General"})
+              </option>
+            ))}
+          </select>
+          <select 
             value={passFail} 
             onChange={(e) => { setPassFail(e.target.value); setPage(1); }}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
           >
             <option value="">All Results</option>
             <option value="passed">Passed Only</option>
@@ -133,14 +182,14 @@ export default function AdminResultsPage() {
           <select 
             value={sort} 
             onChange={(e) => { setSort(e.target.value); setPage(1); }}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
           >
             <option value="latest">Latest First</option>
             <option value="oldest">Oldest First</option>
             <option value="highestScore">Highest Score</option>
             <option value="lowestScore">Lowest Score</option>
           </select>
-          <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+          <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition text-sm">
             Filter
           </button>
         </form>
@@ -157,13 +206,14 @@ export default function AdminResultsPage() {
                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">%</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Result</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Submitted</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr><td colSpan="6" className="text-center py-12 text-gray-500 font-medium">Loading results...</td></tr>
+                <tr><td colSpan="7" className="text-center py-12 text-gray-500 font-medium">Loading results...</td></tr>
               ) : results.length === 0 ? (
-                <tr><td colSpan="6" className="text-center py-12 text-gray-500 font-medium">No results found</td></tr>
+                <tr><td colSpan="7" className="text-center py-12 text-gray-500 font-medium">No results found</td></tr>
               ) : (
                 results.map(r => (
                   <tr key={r._id} className="hover:bg-gray-50 transition">
@@ -184,6 +234,15 @@ export default function AdminResultsPage() {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {new Date(r.submittedAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleDeleteResult(r._id, r.studentId?.name, r.testId?.title)}
+                        className="bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-800 text-xs font-bold px-3 py-1.5 rounded-lg border border-red-200 transition inline-flex items-center gap-1 shadow-sm"
+                        title="Delete this student test attempt result"
+                      >
+                        🗑️ Delete
+                      </button>
                     </td>
                   </tr>
                 ))

@@ -1,0 +1,177 @@
+GyanSagar Test System - Result System File Reference
+====================================================
+
+This file documents the result-system files requested for the student/admin result flow.
+
+PROJECT FILES
+-------------
+
+models/
+  User.js
+  Test.js
+  Question.js
+  TestAttempt.js
+
+lib/
+  mongodb.js
+  student-auth.js
+
+services/
+  scoring.js
+
+app/api/admin/results/
+  route.js
+
+student result page
+  app/student/results/[id]/page.js
+
+admin result page
+  app/admin/(protected)/results/page.js
+
+result PDF generator
+  lib/result-pdf.js
+
+
+MODEL RESPONSIBILITIES
+----------------------
+
+User.js
+  Stores name, email/mobile, bcrypt password hash, role, and active status.
+  Student result access must always use the authenticated student's id.
+
+Test.js
+  Stores title, subject, duration, marks, negative marking, passing percentage,
+  publication status, and allowReattempt settings.
+
+Question.js
+  Stores testId, question text, four options, correct answer, marks,
+  difficulty, subject, and explanation.
+  Correct answers must never be sent to the browser before submission.
+
+TestAttempt.js
+  Stores studentId, testId, answers, status, timestamps, score,
+  correctAnswers, wrongAnswers, unattemptedAnswers, percentage, and review flags.
+  Supported statuses: in_progress, submitted, auto_submitted.
+
+
+SERVICE CONTRACT: services/scoring.js
+--------------------------------------
+
+scoreAttempt(attempt, test, questions)
+  For every question:
+    correct answer: add question.marks
+    wrong answer: subtract test.negativeMarks
+    unattempted: add zero
+
+  Returns:
+    score
+    correctAnswers
+    wrongAnswers
+    unattemptedAnswers
+    totalQuestions
+    percentage
+
+  The function must be server-only and must compare answers against Question.correctAnswer.
+
+
+ADMIN API: app/api/admin/results/route.js
+-----------------------------------------
+
+GET /api/admin/results
+  Requires an authenticated admin session.
+  Supports page, limit, search, testId, and studentId filters.
+  Returns paginated results with student name/email and test title.
+
+GET /api/admin/results/:id
+  Requires admin authorization.
+  Returns one result and its summary.
+
+Response shape:
+  {
+    success: true,
+    data: [],
+    pagination: { page: 1, limit: 20, total: 0, pages: 0 }
+  }
+
+Unauthorized response:
+  HTTP 401
+  { "success": false, "message": "Unauthorized" }
+
+
+STUDENT RESULT PAGE
+-------------------
+
+Path: app/student/results/[id]/page.js
+
+  Read the authenticated student's result only.
+  Display:
+    Test Completed
+    Score / Total Marks
+    Percentage
+    Correct answers
+    Wrong answers
+    Unattempted answers
+    Time taken
+    Attempt date
+    Submission status
+
+  Never trust a student-provided studentId or expose another student's result.
+
+
+ADMIN RESULT PAGE
+-----------------
+
+Path: app/admin/(protected)/results/page.js
+
+  Use the protected admin layout.
+  Display searchable, paginated result rows:
+    Student
+    Test
+    Score
+    Percentage
+    Correct
+    Wrong
+    Unattempted
+    Status
+    Attempt date
+    View result
+    Download PDF
+
+
+RESULT PDF GENERATOR
+--------------------
+
+Path: lib/result-pdf.js
+
+  Server-only utility.
+  Input: result summary, student details, and test details.
+  Output: a PDF buffer or a Response with Content-Type application/pdf.
+  Include branding:
+    GyanSagar Test System
+    ज्ञानसागर कोचिंग क्लासेज
+  Include score, percentage, question totals, attempt date, duration, and status.
+  Never include password hashes, session tokens, or MongoDB credentials.
+
+
+SECURITY CHECKLIST
+------------------
+
+  - Admin results API requires admin role.
+  - Student result API requires student role and matching studentId.
+  - Result ownership is checked on the server.
+  - Correct answers remain server-side.
+  - PDF generation runs only on the server.
+  - No password or secret is returned in any result response.
+  - Invalid ObjectIds return HTTP 400.
+  - Missing results return HTTP 404.
+
+
+IMPLEMENTATION ORDER
+--------------------
+
+  1. Confirm TestAttempt schema and indexes.
+  2. Add services/scoring.js and test score calculations.
+  3. Add admin results API and protected admin results page.
+  4. Add student result API/page with ownership checks.
+  5. Add server-side PDF generator and download endpoint.
+  6. Verify unauthorized access returns 401/403 and build passes.

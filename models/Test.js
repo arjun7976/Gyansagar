@@ -43,6 +43,20 @@ const testSchema = new mongoose.Schema({
     result: { type: Boolean, default: false },
     certificate: { type: Boolean, default: false }
   },
+  omrConfig: {
+    answerKey: [{
+      questionOrder: { type: Number, required: true },
+      answer: { type: String, enum: ["A", "B", "C", "D", "BLANK", ""], default: "" }
+    }],
+    sets: [{
+      setName: { type: String, required: true },
+      answerKey: [{
+        questionOrder: { type: Number, required: true },
+        answer: { type: String, enum: ["A", "B", "C", "D", "BLANK", ""], default: "" }
+      }]
+    }],
+    updatedAt: { type: Date, default: Date.now }
+  },
   status: { type: String, enum: ["draft", "published", "closed"], default: "draft", index: true },
   visibility: { type: String, enum: ["all", "specific"], default: "all" },
   assignedStudents: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],

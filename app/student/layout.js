@@ -27,6 +27,9 @@ export default function StudentLayout({ children }) {
               <Link href="/student" className={`hover:text-blue-200 transition-colors ${isActive('/student') ? 'text-blue-200 underline underline-offset-4' : ''}`}>
                 Dashboard
               </Link>
+              <Link href="/student/omr-results" className={`hover:text-blue-200 transition-colors ${isActive('/student/omr-results') ? 'text-blue-200 underline underline-offset-4' : ''}`}>
+                Offline OMR Results
+              </Link>
               <Link href="/student/certificates" className={`hover:text-blue-200 transition-colors ${isActive('/student/certificates') ? 'text-blue-200 underline underline-offset-4' : ''}`}>
                 Certificates
               </Link>

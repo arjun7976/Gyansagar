@@ -55,21 +55,6 @@ export async function GET(req, { params }) {
         } 
       },
       {
-        $setWindowFields: {
-          sortBy: { 
-            score: -1, 
-            accuracy: -1, 
-            timeTakenSeconds: 1,
-            submittedAt: 1
-          },
-          output: {
-            rank: {
-              $denseRank: {}
-            }
-          }
-        }
-      },
-      {
         $lookup: {
           from: "users",
           localField: "_id",
@@ -81,7 +66,6 @@ export async function GET(req, { params }) {
       {
         $project: {
           _id: 0,
-          rank: 1,
           score: 1,
           percentage: 1,
           accuracy: 1,
@@ -91,7 +75,24 @@ export async function GET(req, { params }) {
       }
     ];
 
-    const leaderboard = await TestAttempt.aggregate(pipeline);
+    const attempts = await TestAttempt.aggregate(pipeline);
+
+    let currentRank = 0;
+    let prevScore = null;
+    const leaderboard = attempts.map((doc, idx) => {
+      if (doc.score !== prevScore) {
+        currentRank = idx + 1;
+        prevScore = doc.score;
+      }
+      return {
+        rank: currentRank,
+        score: doc.score,
+        percentage: doc.percentage,
+        accuracy: doc.accuracy,
+        timeTakenSeconds: doc.timeTakenSeconds,
+        studentName: doc.studentName || "Student"
+      };
+    });
 
     return NextResponse.json({ success: true, leaderboard });
   } catch (error) {

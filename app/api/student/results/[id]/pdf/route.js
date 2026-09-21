@@ -38,6 +38,7 @@ export async function GET(req, { params }) {
     let questions = [];
     if (attempt.selectedQuestions && attempt.selectedQuestions.length > 0) {
       const questionIds = attempt.selectedQuestions.map(sq => sq.questionId);
+      const sqMap = Object.fromEntries(attempt.selectedQuestions.map(sq => [sq.questionId.toString(), sq]));
       questions = await Question.find({ _id: { $in: questionIds } }).lean();
       // Maintain order from selectedQuestions
       const orderMap = {};
@@ -45,6 +46,10 @@ export async function GET(req, { params }) {
         orderMap[sq.questionId.toString()] = idx;
       });
       questions.sort((a, b) => (orderMap[a._id.toString()] ?? 0) - (orderMap[b._id.toString()] ?? 0));
+      questions = questions.map(q => ({
+        ...q,
+        correctAnswer: sqMap[q._id.toString()]?.correctAnswer || q.correctAnswer
+      }));
     } else {
       questions = await Question.find({ testId: attempt.testId._id || attempt.testId }).lean();
     }
