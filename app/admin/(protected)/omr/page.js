@@ -364,6 +364,38 @@ export default function AdminOMRPage() {
     }
   }
 
+  // Delete official OMR answer key server-side
+  async function handleDeleteAnswerKey() {
+    if (!selectedTestId) {
+      setStatusMessage({ type: "warning", text: "Please select an OMR test first." });
+      return;
+    }
+
+    const confirmText = "Are you sure you want to delete the saved Answer Key for this test?\nNote: Previously evaluated student results will remain fully preserved in their profiles!";
+    if (!window.confirm(confirmText)) return;
+
+    setIsSavingKey(true);
+    setStatusMessage({ type: "info", text: "Deleting answer key from server..." });
+
+    try {
+      const res = await fetch(`/api/admin/omr/answer-key?testId=${selectedTestId}`, {
+        method: "DELETE"
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAnswerKeyMap({});
+        setStatusMessage({ type: "success", text: data.message });
+      } else {
+        setStatusMessage({ type: "error", text: data.message || "Failed to delete answer key." });
+      }
+    } catch {
+      setStatusMessage({ type: "error", text: "Server error deleting answer key." });
+    } finally {
+      setIsSavingKey(false);
+    }
+  }
+
   // Update single question answer in Manual Grid
   function handleManualKeyChange(qNum, newAnswer) {
     setAnswerKeyMap((prev) => ({
@@ -1045,13 +1077,26 @@ export default function AdminOMRPage() {
                   <span className="text-xs text-slate-500">
                     Source: <strong>{answerKeySource}</strong>
                   </span>
-                  <button
-                    onClick={handleSaveAnswerKey}
-                    disabled={isSavingKey || !selectedTestId || questionCount === 0}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow transition disabled:opacity-50"
-                  >
-                    {isSavingKey ? "Saving Key..." : "SAVE ANSWER KEY"}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {Object.keys(answerKeyMap).length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleDeleteAnswerKey}
+                        disabled={isSavingKey || !selectedTestId}
+                        className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold text-xs px-3.5 py-2 rounded-xl transition disabled:opacity-50 flex items-center gap-1 shadow-sm"
+                        title="Delete saved Answer Key for this test"
+                      >
+                        🗑️ Delete Key
+                      </button>
+                    )}
+                    <button
+                      onClick={handleSaveAnswerKey}
+                      disabled={isSavingKey || !selectedTestId || questionCount === 0}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow transition disabled:opacity-50"
+                    >
+                      {isSavingKey ? "Saving Key..." : "SAVE ANSWER KEY"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (

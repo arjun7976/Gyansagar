@@ -202,3 +202,47 @@ export async function POST(request) {
     );
   }
 }
+
+// DELETE: Clear/Delete OMR answer key for a test
+export async function DELETE(request) {
+  const admin = await requireAdmin();
+  if (!admin) {
+    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const testId = searchParams.get("testId");
+
+  if (!testId) {
+    return NextResponse.json({ success: false, message: "testId is required." }, { status: 400 });
+  }
+
+  try {
+    await connectToDatabase();
+    const test = await Test.findOne({ _id: testId, isDeleted: { $ne: true } });
+    if (!test) {
+      return NextResponse.json({ success: false, message: "Test not found." }, { status: 404 });
+    }
+
+    test.omrConfig = {
+      answerKey: [],
+      sets: [],
+      updatedAt: new Date()
+    };
+    await test.save();
+
+    return NextResponse.json({
+      success: true,
+      message: `Answer key for "${test.title}" has been deleted. Previously evaluated student results are preserved.`
+    });
+  } catch (error) {
+    console.error("DELETE OMR Answer Key Error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: error.message || "Failed to delete answer key."
+      },
+      { status: 500 }
+    );
+  }
+}
